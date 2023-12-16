@@ -1,0 +1,52 @@
+{
+    "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+    "meta": {
+        "version": "PTDL_v2",
+        "update_url": null
+    },
+    "exported_at": "2023-12-16T12:22:51-05:00",
+    "name": "cloudflare tunnel",
+    "author": "kankantari00@gmail.com",
+    "description": null,
+    "features": null,
+    "docker_images": {
+        "ghcr.io\/pterodactyl\/yolks:debian": "ghcr.io\/pterodactyl\/yolks:debian"
+    },
+    "file_denylist": [],
+    "startup": "sh run.sh",
+    "config": {
+        "files": "{}",
+        "startup": "{}",
+        "logs": "{}",
+        "stop": "^C"
+    },
+    "scripts": {
+        "installation": {
+            "script": "#!\/bin\/bash\r\n\r\ncd \/mnt\/server\r\n\r\n# Cloudflared Installation\r\nwget https:\/\/github.com\/cloudflare\/cloudflared\/releases\/latest\/download\/cloudflared-linux-amd64 -O \/mnt\/server\/cloudflared\r\nchmod +x .\/cloudflared\r\n\r\n.\/cloudflared tunnel login\r\n\r\n# Tunnel Creation and ID Retrieval\r\nTUNNEL_NAME=${CFT_NAME}\r\n.\/cloudflared tunnel create $TUNNEL_NAME\r\n\r\nCRED_FILE=$(find ~\/.cloudflared\/ -maxdepth 1 -type f -name \"*.json\" -exec basename {} \\; -quit)\r\nTUNNEL_ID=\"${CRED_FILE%.*}\"\r\n\r\necho \"Tunnel ID: $TUNNEL_ID\"\r\n\r\nmv ~\/.cloudflared .\/.cloudflared\r\n\r\n# Create a new config.yml\r\necho \"url: ${CFT_HOST}\" > .\/.cloudflared\/config.yml\r\necho \"tunnel: $TUNNEL_ID\" >> .\/.cloudflared\/config.yml\r\nCREDENTIALS_FILE_PATH=\"\/home\/container\/.cloudflared\/$TUNNEL_ID.json\"\r\necho \"credentials-file: $CREDENTIALS_FILE_PATH\" >> .\/.cloudflared\/config.yml\r\n\r\n# Run Script Creation\r\necho \"#!\/bin\/bash\" > .\/run.sh\r\necho \".\/cloudflared tunnel --config .\/.cloudflared\/config.yml run\" >> .\/run.sh\r\n\r\n# Set Permissions\r\nchmod +x .\/run.sh\r\n\r\necho \"Cloudflare Tunnel setup for Pterodactyl completed.\"",
+            "container": "alpine:3.16",
+            "entrypoint": "ash"
+        }
+    },
+    "variables": [
+        {
+            "name": "tunnel name",
+            "description": "",
+            "env_variable": "CFT_NAME",
+            "default_value": "tunnel",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string|max:20",
+            "field_type": "text"
+        },
+        {
+            "name": "tunnel host",
+            "description": "",
+            "env_variable": "CFT_HOST",
+            "default_value": "",
+            "user_viewable": false,
+            "user_editable": false,
+            "rules": "required|string",
+            "field_type": "text"
+        }
+    ]
+}
